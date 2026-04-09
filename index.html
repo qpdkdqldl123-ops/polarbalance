@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환경 밸런스 게임</title>
+    <!-- 1. 구글 로그인 라이브러리 추가 -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #f0f8ff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #game-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
+        
+        /* 로그인 섹션 스타일 */
+        #login-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
+        #user-info { display: none; font-size: 0.9rem; color: #666; margin-bottom: 10px; }
+        
+        /* 기존 게임 스타일 */
+        #quiz { display: none; } /* 로그인 전에는 퀴즈를 숨김 */
+        .question { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .btn-container { display: flex; flex-direction: column; gap: 10px; }
+        button { padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; transition: 0.3s; background-color: #e3f2fd; color: #0d47a1; }
+        button:hover { background-color: #bbdefb; transform: translateY(-2px); }
+        #result { display: none; }
+        .polar-bear { font-size: 5rem; margin: 20px 0; }
+        .message { font-size: 1.1rem; line-height: 1.6; color: #555; margin-bottom: 20px; }
+        .cry { font-weight: bold; color: #d32f2f; font-size: 1.3rem; animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } 100% { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 2. 로그인 섹션 추가 -->
+    <div id="login-section">
+        <h3>로그인 후 북극곰을 구해주세요!</h3>
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+        <div id="user-info"></div>
+    </div>
+
+    <div id="quiz">
+        <div id="progress">질문 1 / 3</div>
+        <p class="question" id="question-text">여름철 너무 더울 때 당신의 선택은?</p>
+        <div class="btn-container">
+            <button onclick="nextStep(0)">에어컨 18도 풀가동! 냉방병 걸릴 때까지</button>
+            <button onclick="nextStep(1)">선풍기와 함께 적정 온도 26도 유지하기</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <h2>게임 결과</h2>
+        <div class="polar-bear" id="bear-icon">❄️</div>
+        <p class="message" id="result-text"></p>
+        <p class="cry">"나의 엄마를 만나게 해줘...!"</p>
+        <button onclick="location.reload()">다시 시작하기</button>
+    </div>
+</div>
+
+<script>
+    // 3. 구글 로그인 처리 함수
+    function handleCredentialResponse(response) {
+        // 실제로는 이 response.credential(JWT)을 서버로 보내야 하지만,
+        // 여기서는 로그인 성공 시 게임 화면을 보여주는 용도로 사용합니다.
+        console.log("로그인 성공!");
+        
+        document.getElementById('login-section').style.display = 'none'; // 로그인창 숨기기
+        document.getElementById('quiz').style.display = 'block'; // 게임 화면 보이기
+        
+        // 유저 정보 데코레이션 (선택사항)
+        const userInfo = document.getElementById('user-info');
+        userInfo.style.display = 'block';
+        userInfo.innerText = "지구 지킴이님 환영합니다!";
+    }
+
+    let score = 0;
+    let currentStep = 0;
+
+    const questions = [
+        {
+            q: "외출할 때 당신은?",
+            a: ["귀찮으니까 그냥 켜두고 가기", "모든 플러그를 뽑고 조명 끄기"],
+        },
+        {
+            q: "배달 음식을 시켰을 때?",
+            a: ["편한 게 최고! 일회용 수저 포함", "용기 내서! 다회용기나 일회용품 거절"],
+        }
+    ];
+
+    function nextStep(choice) {
+        score += choice;
+        if (currentStep < questions.length) {
+            document.getElementById('progress').innerText = `질문 ${currentStep + 2} / 3`;
+            document.getElementById('question-text').innerText = questions[currentStep].q;
+            const buttons = document.querySelectorAll('.btn-container button');
+            buttons[0].innerText = questions[currentStep].a[0];
+            buttons[1].innerText = questions[currentStep].a[1];
+            currentStep++;
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz').style.display = 'none';
+        const resultDiv = document.getElementById('result');
+        const bearIcon = document.getElementById('bear-icon');
+        const resultText = document.getElementById('result-text');
+        resultDiv.style.display = 'block';
+
+        if (score === 3) {
+            bearIcon.innerText = "🐻‍❄️✨";
+            resultText.innerHTML = "<b>당신은 북극곰의 수호자!</b><br>탄소 배출을 최소화하려는 당신 덕분에 얼음 벌판이 유지되고 있어요. 엄마 곰이 사냥을 마치고 돌아올 수 있는 길을 지켜주셨네요.";
+        } else if (score >= 1) {
+            bearIcon.innerText = "💧🐻‍❄️";
+            resultText.innerHTML = "<b>노력이 조금 더 필요해요.</b><br>편리함 속에 녹아내린 빙하 때문에 아기 북극곰이 발을 동동 구르고 있어요. 조금만 더 환경을 생각해주세요.";
+        } else {
+            bearIcon.innerText = "🌊";
+            resultText.innerHTML = "<b>경고: 빙하가 모두 녹아버렸습니다.</b><br>무심코 사용한 에너지가 북극곰의 집을 삼켰어요. 아기 북극곰이 혼자 남겨져 울고 있습니다.";
+        }
+    }
+</script>
+
+</body>
+</html>
